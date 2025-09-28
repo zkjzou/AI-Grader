@@ -1,7 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import Image from "next/image";
+import logo from "../../logo.png";
+import userPic from "../../user.png";
+import Link from "next/link";
+
 
 type UploadedFile = {
   file: File;
@@ -44,14 +49,14 @@ export default function ProjectPage() {
   }, [projectId]);
 
   const uploadCard = (
-    <label className="flex flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed px-6 py-10 transition-colors border-black/10 dark:border-white/20 hover:border-[#818cf8] hover:bg-[#818cf8]/5 cursor-pointer">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-10 h-10 text-black/50 dark:text-white/50" aria-hidden>
+    <label className="flex flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-gray-200 px-6 py-10 transition-colors hover:border-[#a8ffe9] hover:bg-[#e8fffb] cursor-pointer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-10 h-10 text-black/50" aria-hidden>
         <path d="M7 20a5 5 0 1 1 1.938-9.615A7 7 0 0 1 21 14a4 4 0 1 1-2.59 7.112L18.3 21H7Z" opacity=".2"/>
         <path d="M12 12V4m0 0 3 3m-3-3-3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
       </svg>
       <div className="text-center">
         <p className="text-sm font-medium">Drag & drop files here</p>
-        <p className="text-xs text-black/60 dark:text-white/60">or click to browse</p>
+        <p className="text-xs text-gray-500">or click to browse</p>
       </div>
       <input
         type="file"
@@ -81,10 +86,8 @@ export default function ProjectPage() {
       const crit = next.students[sIdx].problems[pIdx].criteria[cIdx];
       const num = clamp(Number(value ?? 0) || 0, 0, crit.maxPoints);
       crit.pointsAwarded = num;
-      // Recompute problem score
       const prob = next.students[sIdx].problems[pIdx];
       prob.score = prob.criteria.reduce((sum: number, c: any) => sum + (c.pointsAwarded || 0), 0);
-      // Recompute student total
       const student = next.students[sIdx];
       student.total = student.problems.reduce((sum: number, p: any) => sum + (p.score || 0), 0);
       return next;
@@ -110,32 +113,43 @@ export default function ProjectPage() {
   };
 
   return (
-    <div className="font-sans min-h-screen">
-      <header className="px-6 sm:px-10 pt-8 pb-4">
-        <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-[#818cf8]" />
-            <span className="text-base font-semibold tracking-tight">{projectName || "Project"}</span>
-          </div>
-          <button
-            className="text-xs rounded-full px-3 py-1 border border-black/10 dark:border-white/15 hover:bg-black/5 dark:hover:bg-white/5"
-            onClick={() => router.push("/")}
-          >
-            All projects
-          </button>
-        </div>
-      </header>
+    <div className="font-sans min-h-screen bg-[#f9f9fb] text-gray-900">
+      {/* Header */}
+      <header className="flex items-center justify-between px-6 py-4 bg-white dark:bg-gray-900 shadow-sm rounded-[50px] mt-6 mx-6 mb-6">
+
+  <div className="flex items-center gap-3">
+  <Link href="/">
+    <Image src={logo} alt="logo" width={200} height={200} className="cursor-pointer" />
+  </Link>
+</div>
+
+  <div className="flex items-center gap-3">
+    <div className="flex items-center gap-4">
+  <Image src={userPic} alt="User" width={50} height={50} className="rounded-full" />
+
+  <div className="flex flex-col text-base">
+    <span className="font-semibold text-black dark:text-white text-base">Jose Simmons</span>
+    <small className="text-sm text-black/50 dark:text-white/50">Instructor</small>
+  </div>
+</div>
+    <div className="flex items-center gap-2 ml-4 text-black/60 dark:text-white/60">
+      <i className="fa-solid fa-gear cursor-pointer hover:text-black dark:hover:text-white"></i>
+      <i className="fa-solid fa-ellipsis-vertical cursor-pointer hover:text-black dark:hover:text-white"></i>
+    </div>
+  </div>
+</header>
 
       <main className="px-6 sm:px-10 pb-16">
         <div className="max-w-6xl mx-auto">
           <section className="text-center py-6">
             <h1 className="text-2xl font-semibold tracking-tight">Student submissions</h1>
-            <p className="text-sm text-black/70 dark:text-white/70">Upload files for {projectName || "this project"}, then grade and review results.</p>
+            <p className="text-sm text-gray-500">Upload files for {projectName || "this project"}, then grade and review results.</p>
           </section>
 
+          {/* Submissions Upload */}
           {step === "submissions" && (
             <section className="grid grid-cols-1 gap-6">
-              <div className="rounded-2xl border border-black/10 dark:border-white/15 p-6 sm:p-8">
+              <div className="rounded-2xl border border-gray-200 p-6 sm:p-8 bg-white shadow-sm">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-lg font-semibold">Upload student submissions</h2>
                 </div>
@@ -145,8 +159,8 @@ export default function ProjectPage() {
                     disabled={submissions.length === 0}
                     className={`mt-6 rounded-full px-6 py-3 text-sm font-medium transition-colors ${
                       submissions.length > 0
-                        ? "bg-[#818cf8] text-white hover:bg-[#6c79f6]"
-                        : "bg-black/10 dark:bg-white/10 text-black/60 dark:text-white/60 cursor-not-allowed"
+                        ? "bg-[#0fe3c2] text-black hover:bg-[#a8ffe9]"
+                        : "bg-gray-200 text-gray-400 cursor-not-allowed"
                     }`}
                     onClick={() => setStep("submissionsList")}
                   >
@@ -157,15 +171,16 @@ export default function ProjectPage() {
             </section>
           )}
 
+          {/* Submissions List */}
           {step === "submissionsList" && (
             <section className="grid grid-cols-1 gap-6">
-              <div className="rounded-2xl border border-black/10 dark:border-white/15 p-6 sm:p-8">
+              <div className="rounded-2xl border border-gray-200 p-6 sm:p-8 bg-white shadow-sm">
                 <div className="flex items-center justify-between gap-4 mb-4">
                   <h2 className="text-xl font-semibold tracking-tight">Student submissions</h2>
                   <div className="flex items-center gap-2">
                     {submissions.length > 0 && !gradesResult && (
                       <button
-                        className="text-xs rounded-full px-3 py-1 bg-[#10b981] text-white hover:bg-[#0ea371]"
+                        className="text-xs rounded-full px-3 py-1 bg-[#0fe3c2] text-black hover:bg-[#a8ffe9]"
                         onClick={async () => {
                           try {
                             setIsLoading(true);
@@ -190,7 +205,7 @@ export default function ProjectPage() {
                       </button>
                     )}
                     <button
-                      className="text-xs rounded-full px-3 py-1 border border-black/10 dark:border-white/15 hover:bg-black/5 dark:hover:bg-white/5"
+                      className="text-xs rounded-full px-3 py-1 border border-gray-200 hover:bg-gray-100"
                       onClick={() => setStep("submissions")}
                     >
                       Upload more submissions
@@ -198,22 +213,22 @@ export default function ProjectPage() {
                   </div>
                 </div>
                 {submissions.length === 0 ? (
-                  <p className="text-sm text-black/60 dark:text-white/60">No submissions yet. Use "Upload more submissions" to add files.</p>
+                  <p className="text-sm text-gray-500">No submissions yet. Use "Upload more submissions" to add files.</p>
                 ) : (
-                  <ul className="divide-y divide-black/10 dark:divide-white/15 rounded-lg border border-black/10 dark:border-white/15 overflow-hidden">
+                  <ul className="divide-y divide-gray-200 rounded-lg border border-gray-200 overflow-hidden">
                     {submissions.map((s, i) => (
-                      <li key={`${s.name}-${i}`} className="flex items-center gap-3 px-3 py-2">
+                      <li key={`${s.name}-${i}`} className="flex items-center gap-3 px-3 py-2 bg-white rounded-lg shadow-sm hover:bg-[#a8ffe9;]">
                         <div className="min-w-0">
                           <p className="text-sm font-medium truncate" title={s.name}>{s.name}</p>
-                          <p className="text-xs text-black/60 dark:text-white/60">{s.sizeLabel}</p>
+                          <p className="text-xs text-gray-500">{s.sizeLabel}</p>
                         </div>
                         {!gradesResult ? (
-                          <span className="ml-auto text-[10px] rounded-full px-2 py-1 border border-black/10 dark:border-white/15 text-black/60 dark:text-white/60">
+                          <span className="ml-auto text-[10px] rounded-full px-2 py-1 border border-gray-200 text-gray-500">
                             Ungraded
                           </span>
                         ) : (
                           <button
-                            className="ml-auto text-xs rounded-full px-3 py-1 border border-black/10 dark:border-white/15 hover:bg-black/5 dark:hover:bg-white/5"
+                            className="ml-auto text-xs rounded-full px-3 py-1 border border-gray-200 hover:bg-gray-100"
                             onClick={() => {
                               setSelectedSubmission(i);
                               setStep("grades");
@@ -229,95 +244,8 @@ export default function ProjectPage() {
               </div>
             </section>
           )}
-          {step === "grades" && gradesResult && (
-            <section className="grid grid-cols-1 gap-6">
-              <div className="rounded-2xl border border-black/10 dark:border-white/15 overflow-hidden">
-                <div className="grid grid-cols-1 lg:grid-cols-2">
-                  <div className="bg-black/5 dark:bg-white/5 min-h-[520px] p-4">
-                    <div className="aspect-[1/1.3] w-full h-auto bg-black/10 dark:bg-white/10 flex items-center justify-center text-xs text-black/60 dark:text-white/60">
-                      PDF preview placeholder for {gradesResult.students[selectedSubmission]?.filename}
-                    </div>
-                  </div>
-                  <div className="p-6 border-t lg:border-t-0 lg:border-l border-black/10 dark:border-white/15">
-                    <div className="flex items-center justify-between mb-4">
-                      <div>
-                        <h2 className="text-lg font-semibold">Score: {gradesResult.students[selectedSubmission]?.total.toFixed(1)}</h2>
-                        <p className="text-xs text-black/60 dark:text-white/60">{gradesResult.students[selectedSubmission]?.name}</p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <select
-                          className="text-xs bg-transparent outline-none border rounded-md border-black/10 dark:border-white/15 px-2 py-1"
-                          value={selectedSubmission}
-                          onChange={(e) => setSelectedSubmission(Number(e.target.value))}
-                        >
-                          {gradesResult.students.map((s: any, i: number) => (
-                            <option key={s.id} value={i}>{s.filename}</option>
-                          ))}
-                        </select>
-                        <button
-                          className="text-xs rounded-full px-3 py-1 bg-[#818cf8] text-white hover:bg-[#6c79f6]"
-                          onClick={() => setSelectedSubmission((i) => Math.min(i + 1, gradesResult.students.length - 1))}
-                        >
-                          Next submission
-                        </button>
-                      </div>
-                    </div>
-
-                    <div className="space-y-3">
-                      {gradesResult.students[selectedSubmission]?.problems.map((p: any, idx: number) => (
-                        <details key={p.problemId} className="rounded-lg border border-black/10 dark:border-white/15 overflow-hidden" open>
-                          <summary className="cursor-pointer select-none px-4 py-3 flex items-center justify-between">
-                            <span className="text-sm font-medium">{idx + 1}. {p.title}</span>
-                            <span className="text-xs">{p.score.toFixed(1)} / {p.maxPoints}</span>
-                          </summary>
-                          <div className="px-4 pb-4">
-                            <div className="space-y-2">
-                              {p.criteria.map((c: any, cIdx: number) => (
-                                <div key={c.id} className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-2 rounded-md border border-black/10 dark:border-white/15 px-3 py-2">
-                                  <div>
-                                    <p className="text-xs font-medium mb-1">{c.id}</p>
-                                    <textarea
-                                      className="w-full text-xs bg-transparent outline-none border rounded-md border-black/10 dark:border-white/15 px-3 py-2 focus:border-[#818cf8]"
-                                      value={c.comment || ""}
-                                      onChange={(e) => updateCriterionComment(selectedSubmission, idx, cIdx, e.target.value)}
-                                    />
-                                  </div>
-                                  <div className="flex items-center gap-2 md:justify-end">
-                                    <span className="text-[10px] text-black/60 dark:text-white/60">Points</span>
-                                    <input
-                                      type="number"
-                                      min={0}
-                                      max={c.maxPoints}
-                                      className="w-20 text-xs bg-transparent outline-none border rounded-md border-black/10 dark:border-white/15 px-2 py-1 focus:border-[#818cf8]"
-                                      value={c.pointsAwarded}
-                                      onChange={(e) => updateCriterionPoints(selectedSubmission, idx, cIdx, e.target.value)}
-                                    />
-                                    <span className="text-[10px] text-black/60 dark:text-white/60">/ {c.maxPoints}</span>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                            <div className="mt-3">
-                              <label className="block text-[11px] text-black/60 dark:text-white/60 mb-1">Problem comment</label>
-                              <textarea
-                                className="w-full text-xs bg-transparent outline-none border rounded-md border-black/10 dark:border-white/15 px-3 py-2 focus:border-[#818cf8]"
-                                value={p.comment || ""}
-                                onChange={(e) => updateProblemComment(selectedSubmission, idx, e.target.value)}
-                              />
-                            </div>
-                          </div>
-                        </details>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </section>
-          )}
         </div>
       </main>
     </div>
   );
 }
-
-
