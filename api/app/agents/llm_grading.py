@@ -115,33 +115,47 @@ def _parse_json_output(content: str) -> Any:
     raise ValueError("Model did not return valid JSON content")
 
 
-def rubric_to_problem_structure(score_rubric: Dict[str, Any]) -> Dict[str, Any]:
-    """Minimize rubric to a structure with only text descriptions for problems/subproblems.
+from typing import Any, Dict, List
 
-    This mirrors the notebook helper used to build `problem_structure` for extraction.
-    """
-    structure: Dict[str, Any] = {}
-    for problem_key, problem_val in (score_rubric or {}).items():
-        if not isinstance(problem_val, dict):
+
+def rubric_to_problem_structure(score_rubric: List[Dict[str, Any]]) -> Dict[str, Any]:
+    structure: List[Dict[str, Any]] = []
+
+    for problem in score_rubric or []:
+        if not isinstance(problem, dict):
             continue
+
         problem_entry: Dict[str, Any] = {}
-        if "text description" in problem_val:
-            problem_entry["text description"] = problem_val["text description"]
-        subproblems = problem_val.get("subproblems")
-        if isinstance(subproblems, dict):
-            sp_min: Dict[str, Any] = {}
-            for sub_key, sub_val in subproblems.items():
-                if not isinstance(sub_val, dict):
+
+        if "id" in problem:
+            problem_entry["id"] = problem["id"]
+        if "name" in problem:
+            problem_entry["name"] = problem["name"]
+
+        if "description" in problem:
+            problem_entry["description"] = problem["description"]
+
+        items = problem.get("items")
+        if isinstance(items, list):
+            minimized_items: List[Dict[str, Any]] = []
+            for item in items:
+                if not isinstance(item, dict):
                     continue
-                entry: Dict[str, Any] = {}
-                if "text description" in sub_val:
-                    entry["text description"] = sub_val["text description"]
-                sp_min[sub_key] = entry
-            if sp_min:
-                problem_entry["subproblems"] = sp_min
+                item_entry: Dict[str, Any] = {}
+                if "id" in item:
+                    item_entry["id"] = item["id"]
+                if "description" in item:
+                    item_entry["description"] = item["description"]
+                if item_entry:
+                    minimized_items.append(item_entry)
+            if minimized_items:
+                problem_entry["items"] = minimized_items
+
         if problem_entry:
-            structure[problem_key] = problem_entry
+            structure.append(problem_entry)
+
     return structure
+
 
 
 def preprocess(

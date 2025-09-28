@@ -19,40 +19,26 @@ Guidelines:
 - Output **only valid JSON**, following the schema below. Do not include commentary, Markdown, or extra text.
 
 JSON schema:
-{
-  "Problem 1": {
-    "text description": "<string>",
-    "rubric items": {
-      "item 1": {"text description": "<string>", "points": <number>}
-    },
-    "subproblems": {
-      "Problem 1.1": {
-        "text description": "<string>",
-        "rubric items": {
-          "item 1": {"text description": "<string>", "points": <number>}
-        },
-        "total": <number>
-      }
-    },
+[
+  {
+    "id": "<number>",
+    "name": "Problem 1",
+    "description": "<string>",
+    "items": [
+      {"id": "<number>", "description": "<string>", "points": <number>}
+    ],
     "total": <number>
   },
-  "Problem 2": {
-    "text description": "<string>",
-    "rubric items": {
-      "item 1": {"text description": "<string>", "points": <number>}
-    },
-    "subproblems": {
-      "Problem 2.1": {
-        "text description": "<string>",
-        "rubric items": {
-          "item 1": {"text description": "<string>", "points": <number>}
-        },
-        "total": <number>
-      }
-    },
+  {
+    "id": "<number>",
+    "name": "Problem 2",
+    "description": "<string>",
+    "items": [
+      {"id": "<number>", "description": "<string>", "points": <number>}
+    ],
     "total": <number>
   }
-}
+]
 """
 
 
@@ -61,24 +47,26 @@ Please read the uploaded homework assignment carefully and extract each problem�
 
 Extract each problem in the JSON format shown below:
 
-{
-  "Problem 1": {
-    "text description": "<string>",
-    "rubric items": {
-      "item 1": {"text description": "<string>", "points": <number>}
-    },
-    "subproblems": {
-      "Problem 1.1": {
-        "text description": "<string>",
-        "rubric items": {
-          "item 1": {"text description": "<string>", "points": <number>}
-        },
-        "total": <number>
-      }
-    },
+[
+  {
+    "id": "<number>",
+    "name": "Problem 1",
+    "description": "<string>",
+    "items": [
+      {"id": "<number>", "description": "<string>", "points": <number>}
+    ],
+    "total": <number>
+  },
+  {
+    "id": "<number>",
+    "name": "Problem 2",
+    "description": "<string>",
+    "items": [
+      {"id": "<number>", "description": "<string>", "points": <number>}
+    ],
     "total": <number>
   }
-}
+]
 
 Rules:
 - Preserve the original wording of each problem in "text description".
@@ -138,31 +126,19 @@ You are a meticulous Teaching Assistant that grades ONLY according to the given 
 
 Output MUST be valid JSON only, following this exact nested schema (keys as shown; you may include any number of subproblems/items):
 
-{
-  "Problem 1": {
-    "subproblems": {
-      "Problem 1。1": {
-        "items": {
-          "item 1": {"score": <number|null>, "total possible score": <number>, "explanation": <string>, "confidence": <number 0..1>},
-          "item 2": {"score": <number|null>, "total possible score": <number>, "explanation": <string>, "confidence": <number 0..1>}
-        },
-        "score": <number|null>,
-        "total score": <number>,
-        "explanation": <string>,         // brief overall rationale for this subproblem (2–5 sentences)
-        "confidence": <number 0..1>      // overall confidence for this subproblem
-      },
-      "Problem 1.2": { ... },
-      "Problem 1.3": { ... }
-    },
-    "items": {                          // OPTIONAL: use if the problem has rubric items not tied to a specific subproblem
-      "item X": {"score": <number|null>, "total possible score": <number>, "explanation": <string>, "confidence": <number 0..1>}
-    },
+[
+  {
+    "id": "<number>",
+    "name": "Problem 1",
+    "items": [                       
+      {"item": <number>, "score": <number|null>, "total_possible_score": <number>, "explanation": <string>, "confidence": <number 0..1>}
+    ],
     "score": <number|null>,             // sum of numeric subproblem/item scores; null if any required part is indeterminate
-    "total score": <number>,            // sum of all "total possible score" values
+    "total_score": <number>,            // sum of all "total_possible_score" values
     "explanation": <string>,            // brief overall rationale for the whole problem
     "confidence": <number 0..1>         // overall confidence (e.g., min/mean of subparts; be conservative)
   }
-}
+]
 
 Explain “explanation” and “confidence” like this:
 - Explanation = FAITHFUL and FAIR: grounded ONLY in the student’s text + rubric; quote short snippets (≤20 words) when helpful; justify points/deductions precisely; 2–5 sentences per item/subproblem/problem.
@@ -180,31 +156,19 @@ You are a meticulous Teaching Assistant that grades ONLY according to the given 
 
 Output MUST be valid JSON only, following this exact nested schema (keys as shown; you may include any number of subproblems/items):
 
-{
-  "Problem 1": {
-    "subproblems": {
-      "Problem 1.1": {
-        "items": {
-          "item 1": {"score": <number|null>, "total possible score": <number>, "explanation": <string>, "confidence": <number 0..1>},
-          "item 2": {"score": <number|null>, "total possible score": <number>, "explanation": <string>, "confidence": <number 0..1>}
-        },
-        "score": <number|null>,
-        "total score": <number>,
-        "explanation": <string>,         // brief overall rationale for this subproblem (2–5 sentences)
-        "confidence": <number 0..1>      // overall confidence for this subproblem
-      },
-      "Problem 1.2": { ... },
-      "Problem 1.3": { ... }
-    },
-    "items": {                          // OPTIONAL: use if the problem has rubric items not tied to a specific subproblem
-      "item X": {"score": <number|null>, "total possible score": <number>, "explanation": <string>, "confidence": <number 0..1>}
-    },
+[
+  {
+    "id": "<number>",
+    "name": "Problem 1",
+    "items": [                       
+      {"item": <number>, "score": <number|null>, "total_possible_score": <number>, "explanation": <string>, "confidence": <number 0..1>}
+    ],
     "score": <number|null>,             // sum of numeric subproblem/item scores; null if any required part is indeterminate
-    "total score": <number>,            // sum of all "total possible score" values
+    "total_score": <number>,            // sum of all "total_possible_score" values
     "explanation": <string>,            // brief overall rationale for the whole problem
     "confidence": <number 0..1>         // overall confidence (e.g., min/mean of subparts; be conservative)
   }
-}
+]
 
 Explain “explanation” and “confidence” like this:
 - Explanation = FAITHFUL and FAIR: grounded ONLY in the student’s text + rubric; quote short snippets (≤20 words) when helpful; justify points/deductions precisely; 2–5 sentences per item/subproblem/problem.
