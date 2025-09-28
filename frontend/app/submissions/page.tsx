@@ -92,7 +92,7 @@ function SubmissionUploadCard({
 
   return (
     <div className="w-full max-w-2xl mx-auto rounded-2xl border border-black/10 dark:border-white/15 bg-white dark:bg-gray-900 shadow-sm p-6 sm:p-8">
-      <h2 className="text-xl font-semibold tracking-tight mb-1">Grade Student Submission</h2>
+      <h2 className="text-xl font-semibold tracking-tight mb-1">Grade Submission</h2>
       <p className="text-sm text-black/60 dark:text-white/60 mb-6">
         Select an assignment and upload a student's submission for AI grading.
       </p>
