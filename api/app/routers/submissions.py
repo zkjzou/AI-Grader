@@ -122,3 +122,28 @@ def get_submission(submission_id: str):
         status_code=status.HTTP_200_OK,
         content=submission
     )
+
+
+@router.put("/{submission_id}", status_code=status.HTTP_200_OK)
+def update_submission(submission_id: str, payload: Dict[str, Any]):
+    """Update a submission's fields (e.g., graded_content).
+
+    Expects a JSON body containing fields to update. For now we allow
+    updating `graded_content` and `student_name` and `file_path` if provided.
+    """
+    submission = submissions.get(submission_id)
+    if not submission:
+        return JSONResponse(
+            status_code=status.HTTP_404_NOT_FOUND,
+            content={"message": "Submission not found"}
+        )
+
+    # Only update allowed fields to avoid unexpected changes
+    allowed_fields = {"graded_content", "student_name", "file_path"}
+    for key, value in payload.items():
+        if key in allowed_fields:
+            submission[key] = value
+
+    submissions[submission_id] = submission
+
+    return JSONResponse(status_code=status.HTTP_200_OK, content=submission)
