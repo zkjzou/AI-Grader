@@ -9,10 +9,6 @@ from google import genai  # requires GEMINI_API_KEY or GOOGLE_API_KEY in env
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.messages import HumanMessage, SystemMessage
 
-from app.db import engine
-from app.repos.assignment import AssignmentRepo
-from sqlmodel import Session
-
 
 def _ensure_api_key() -> None:
     """Raise a helpful error if the Gemini key is missing."""
@@ -24,7 +20,7 @@ def _ensure_api_key() -> None:
 
 def _load_prompts() -> Dict[str, str]:
     """Load prompt strings by importing directly from `prompts` module."""
-    from prompts import (
+    from .prompts import (
         PREPROCESSING_SYSTEM_PROMPT,
         PREPROCESSING_USER_PROMPT,
         PROBLEM_EXTRACTION_SYSTEM_PROMPT,
@@ -283,7 +279,7 @@ def grade_submission(
         HumanMessage(
             content=[
                 {"type": "text", "text": user_text},
-                {"type": "media", "file_uri": submission.uri, "mime_type": _detect_mime_type(submission_pdf_path)},
+                {"type": "media", "file_uri": submission.uri, "mime_type": _detect_mime_type(str(submission_pdf_path))},
             ]
         ),
     ]

@@ -1,59 +1,74 @@
-from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
-from sqlmodel import Session
-from typing import List
-from uuid import UUID
-
-from app.models.assignment import Assignment
-from app.repos.assignment import AssignmentRepo
-from app.db import get_session
+from fastapi import APIRouter, UploadFile, File, BackgroundTasks, status
+from starlette.responses import JSONResponse as JsonResponse
+from pathlib import Path
+import random
+import shutil
+from typing import Optional
+from app.agents.llm_grading import preprocess, rubric_to_problem_structure
 
 router = APIRouter(prefix="/assignments", tags=["assignments"])
 
+UPLOAD_DIR = Path("uploads/assignments")
+UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
-@router.post("/", response_model=Assignment, status_code=status.HTTP_201_CREATED)
-def create_assignment(assignment: Assignment, background_tasks: BackgroundTasks, session: Session = Depends(get_session),):
-    assignment.course_id = UUID(assignment.course_id)
-    repo = AssignmentRepo(session)
-    rec = repo.create(assignment)
-    # TODO background_tasks.add_task(preprocess_assignment, rec.id)
-    return rec
+# In-memory store for assignments
+assignments = {}
 
+def process_rubric(file_id: str, file_path: Path):
+    """
+    Preprocess the uploaded PDF and store the rubric in the assignments dict.
+    """
+    rubric_dict = preprocess(
+        problems_pdf_path=str(file_path),
+        optional_solution_or_rubric_text=None,
+    )
 
-@router.get("/by_course/{course_id}", response_model=List[Assignment])
-def list_assignments_by_course(course_id: UUID, session: Session = Depends(get_session)):
-    repo = AssignmentRepo(session)
-    return repo.get_by_course(course_id)
+    problem_structure = rubric_to_problem_structure(rubric_dict)
 
+    assignments[file_id]["rubric"] = rubric_dict
+    assignments[file_id]["problem_structure"] = problem_structure
 
-@router.get("/{assignment_id}", response_model=Assignment)
-def get_assignment(assignment_id: UUID, session: Session = Depends(get_session)):
-    repo = AssignmentRepo(session)
-    assignment = repo.get(assignment_id)
-    if not assignment:
-        raise HTTPException(status_code=404, detail="Assignment not found")
-    return assignment
-
-
-@router.put("/{assignment_id}", response_model=Assignment)
-def update_assignment(assignment_id: UUID, updated_assignment: Assignment, session: Session = Depends(get_session)):
-    repo = AssignmentRepo(session)
-    assignment = repo.get(assignment_id)
-    if not assignment:
-        raise HTTPException(status_code=404, detail="Assignment not found")
+@router.post("/", status_code=status.HTTP_201_CREATED)
+def create_rubric(
+    background_tasks: BackgroundTasks,
+    file: UploadFile = File(...)
+):
+    file_id = str(random.randint(1, 999))
+    saved_path = UPLOAD_DIR / f"{file_id}-{file.filename}"
     
-    assignment.title = updated_assignment.title
-    assignment.description = updated_assignment.description
-    assignment.rubric_url = updated_assignment.rubric_url
-    assignment.solution_key_url = updated_assignment.solution_key_url
-    
-    return repo.update(assignment)
+    with saved_path.open("wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
 
+    # Store basic assignment info first
+    assignments[file_id] = {
+        "id": file_id,
+        "file_path": str(saved_path),
+        "rubric": None,
+        "problem_structure": None  # Will be filled by background task
+    }
 
-@router.delete("/{assignment_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_assignment(assignment_id: UUID, session: Session = Depends(get_session)):
-    repo = AssignmentRepo(session)
-    assignment = repo.get(assignment_id)
+    # Schedule preprocessing in the background
+    background_tasks.add_task(
+        process_rubric,
+        file_id=file_id,
+        file_path=saved_path
+    )
+
+    return JsonResponse(
+        status_code=status.HTTP_201_CREATED,
+        content={"assignment_id": file_id, "message": "Rubric uploaded. Processing in background."}
+    )
+
+@router.get("/{assignment_id}", status_code=status.HTTP_200_OK)
+def get_rubric(assignment_id: str):
+    assignment = assignments.get(assignment_id)
     if not assignment:
-        raise HTTPException(status_code=404, detail="Assignment not found")
-    repo.delete(assignment)
-    return None
+        return JsonResponse(
+            status_code=status.HTTP_404_NOT_FOUND,
+            content={"message": "Assignment not found"}
+        )
+
+    return JsonResponse(
+        status_code=status.HTTP_200_OK,
+        content=assignment
+    )
