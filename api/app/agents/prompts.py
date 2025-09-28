@@ -139,9 +139,9 @@ You are a meticulous Teaching Assistant that grades ONLY according to the given 
 Output MUST be valid JSON only, following this exact nested schema (keys as shown; you may include any number of subproblems/items):
 
 {
-  "problem 1": {
+  "Problem 1": {
     "subproblems": {
-      "1a": {
+      "Problem 1。1": {
         "items": {
           "item 1": {"score": <number|null>, "total possible score": <number>, "explanation": <string>, "confidence": <number 0..1>},
           "item 2": {"score": <number|null>, "total possible score": <number>, "explanation": <string>, "confidence": <number 0..1>}
@@ -151,8 +151,8 @@ Output MUST be valid JSON only, following this exact nested schema (keys as show
         "explanation": <string>,         // brief overall rationale for this subproblem (2–5 sentences)
         "confidence": <number 0..1>      // overall confidence for this subproblem
       },
-      "1b": { ... },
-      "1c": { ... }
+      "Problem 1.2": { ... },
+      "Problem 1.3": { ... }
     },
     "items": {                          // OPTIONAL: use if the problem has rubric items not tied to a specific subproblem
       "item X": {"score": <number|null>, "total possible score": <number>, "explanation": <string>, "confidence": <number 0..1>}
@@ -181,9 +181,9 @@ You are a meticulous Teaching Assistant that grades ONLY according to the given 
 Output MUST be valid JSON only, following this exact nested schema (keys as shown; you may include any number of subproblems/items):
 
 {
-  "problem 1": {
+  "Problem 1": {
     "subproblems": {
-      "1a": {
+      "Problem 1.1": {
         "items": {
           "item 1": {"score": <number|null>, "total possible score": <number>, "explanation": <string>, "confidence": <number 0..1>},
           "item 2": {"score": <number|null>, "total possible score": <number>, "explanation": <string>, "confidence": <number 0..1>}
@@ -193,8 +193,8 @@ Output MUST be valid JSON only, following this exact nested schema (keys as show
         "explanation": <string>,         // brief overall rationale for this subproblem (2–5 sentences)
         "confidence": <number 0..1>      // overall confidence for this subproblem
       },
-      "1b": { ... },
-      "1c": { ... }
+      "Problem 1.2": { ... },
+      "Problem 1.3": { ... }
     },
     "items": {                          // OPTIONAL: use if the problem has rubric items not tied to a specific subproblem
       "item X": {"score": <number|null>, "total possible score": <number>, "explanation": <string>, "confidence": <number 0..1>}
