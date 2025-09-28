@@ -2,6 +2,7 @@ from typing import List, Optional
 from uuid import UUID
 from datetime import datetime
 from sqlmodel import Session
+from sqlalchemy.orm import selectinload
 from app.models.submission import Submission
 from app.models.submission_score import SubmissionScore
 from app.schema.submission import SubmissionCreate, SubmissionUpdate, SubmissionScoreCreate
@@ -25,6 +26,7 @@ class SubmissionRepo:
             db_score = SubmissionScore(
                 submission_id=db_submission.id,
                 criterion_id=score_data.criterion_id,
+                selected_level_id=score_data.selected_level_id,
                 score=score_data.score,
                 reasoning=score_data.reasoning,
                 human_override=score_data.human_override
@@ -35,7 +37,17 @@ class SubmissionRepo:
         return db_submission
 
     def get(self, submission_id: UUID) -> Optional[Submission]:
-        return self.session.get(Submission, submission_id)
+        return (
+            self.session.query(Submission)
+            .options(
+                selectinload(Submission.scores)
+                .selectinload(SubmissionScore.criterion),  # load criterion
+                selectinload(Submission.scores)
+                .selectinload(SubmissionScore.selected_level)  # load selected_level
+            )
+            .filter(Submission.id == submission_id)
+            .first()
+        )
 
     def update(self, db_submission: Submission, update_data: SubmissionUpdate) -> Submission:
         # Update submission fields
@@ -56,6 +68,7 @@ class SubmissionRepo:
                 db_score = SubmissionScore(
                     submission_id=db_submission.id,
                     criterion_id=score_data.criterion_id,
+                    selected_level_id=score_data.selected_level_id,
                     score=score_data.score,
                     reasoning=score_data.reasoning,
                     human_override=score_data.human_override

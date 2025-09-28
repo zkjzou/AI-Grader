@@ -11,3 +11,4 @@ class RubricLevel(SQLModel, table=True):
     description: Optional[str] = None
 
     criterion: Optional["RubricCriteria"] = Relationship(back_populates="levels")
+    awarded_scores: List["SubmissionScore"] = Relationship(back_populates="selected_level")
