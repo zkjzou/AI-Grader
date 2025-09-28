@@ -405,14 +405,33 @@ export default function SubmissionsPage() {
           <Link href="/">
             <Image src={logo} alt="logo" width={200} height={200} className="cursor-pointer" />
           </Link>
-          <nav className="flex items-center gap-4">
-            <Link href="/start" className="text-sm font-medium text-black/60 dark:text-white/60 hover:text-[#0fe3c2]">
-              Create Assignment
-            </Link>
-            <Link href="/submissions" className="text-sm font-medium text-black dark:text-white hover:text-[#0fe3c2]">
-              Grade Submissions
-            </Link>
-          </nav>
+<nav>
+  <ul className="flex items-center gap-4">
+    {/* Create Assignment */}
+    <li className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800">
+      <i className="fa-solid fa-pen text-black/60 dark:text-white/60"></i>
+      <Link 
+        href="/start" 
+        className="text-sm font-medium text-black/60 dark:text-white/60"
+      >
+        Create Assignment
+      </Link>
+    </li>
+
+    {/* Grade Submissions - active */}
+    <li className="flex items-center gap-2 px-3 py-2 rounded-md bg-[#0fe3c2]">
+      <i className="fa-solid fa-graduation-cap text-white"></i>
+      <Link 
+        href="/submissions" 
+        className="text-sm font-medium text-white"
+      >
+        Grade Submissions
+      </Link>
+    </li>
+  </ul>
+</nav>
+
+
         </div>
 
         <div className="flex items-center gap-3">
