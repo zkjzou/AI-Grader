@@ -17,14 +17,6 @@ export default function Landing() {
     <Link href="/">
       <Image src={logo} alt="logo" width={200} height={200} className="cursor-pointer" />
     </Link>
-    <nav className="flex items-center gap-4">
-      <Link href="/start" className="text-sm font-medium text-black/60 dark:text-white/60 hover:text-white">
-        Create Assignment
-      </Link>
-      <Link href="/submissions" className="text-sm font-medium text-black/60 dark:text-white/60 hover:text-white">
-        Grade Submissions
-      </Link>
-    </nav>
   </div>
 </header>
 
