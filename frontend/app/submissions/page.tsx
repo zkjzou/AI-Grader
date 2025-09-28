@@ -92,7 +92,7 @@ function SubmissionUploadCard({
 
   return (
     <div className="w-full max-w-2xl mx-auto rounded-2xl border border-black/10 dark:border-white/15 bg-white dark:bg-gray-900 shadow-sm p-6 sm:p-8">
-      <h2 className="text-xl font-semibold tracking-tight mb-1">Upload Student Submission</h2>
+      <h2 className="text-xl font-semibold tracking-tight mb-1">Grade Student Submission</h2>
       <p className="text-sm text-black/60 dark:text-white/60 mb-6">
         Select an assignment and upload a student's submission for AI grading.
       </p>
@@ -127,7 +127,7 @@ function SubmissionUploadCard({
 
       {/* File Upload */}
       <div className="mb-6">
-        <label className="block text-sm font-medium mb-2">Submission File</label>
+        <label className="block text-sm font-medium mb-2">Student Submission File</label>
         <label
           className={areaClasses}
           onDragOver={(e) => {
@@ -451,12 +451,6 @@ export default function SubmissionsPage() {
 
       <main className="px-6 sm:px-10 pb-16">
         <div className="max-w-4xl mx-auto mt-15">
-          <div className="mb-8">
-            <h1 className="text-2xl font-bold mb-2">Grade Submissions</h1>
-            <p className="text-black/60 dark:text-white/60">
-              Upload student submissions and get AI-powered grading results.
-            </p>
-          </div>
 
           <div className="space-y-8">
             <SubmissionUploadCard
