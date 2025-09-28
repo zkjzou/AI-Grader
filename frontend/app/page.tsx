@@ -13,15 +13,18 @@ export default function Landing() {
       {/* Navbar */}
       <header className="flex items-center justify-between px-6 py-4 bg-white dark:bg-gray-900 shadow-sm rounded-[50px] mt-6 mx-6 mb-6">
 
-  <div className="flex items-center gap-3">
-  <Link href="/">
-    <Image src={logo} alt="logo" width={200} height={200} className="cursor-pointer" />
-  </Link>
-
-    <div className="flex items-center gap-2 ml-4 text-black/60 dark:text-white/60">
-      <i className="fa-solid fa-gear cursor-pointer hover:text-black dark:hover:text-white"></i>
-      <i className="fa-solid fa-ellipsis-vertical cursor-pointer hover:text-black dark:hover:text-white"></i>
-    </div>
+  <div className="flex items-center gap-6">
+    <Link href="/">
+      <Image src={logo} alt="logo" width={200} height={200} className="cursor-pointer" />
+    </Link>
+    <nav className="flex items-center gap-4">
+      <Link href="/start" className="text-sm font-medium text-black/60 dark:text-white/60 hover:text-white">
+        Create Assignment
+      </Link>
+      <Link href="/submissions" className="text-sm font-medium text-black/60 dark:text-white/60 hover:text-white">
+        Grade Submissions
+      </Link>
+    </nav>
   </div>
 </header>
 
@@ -34,9 +37,14 @@ export default function Landing() {
             <p className="text-lg md:text-xl mb-6">
               Upload your assignments and rubrics, and get structured feedback automatically.
             </p>
-            <Link href="start" className="inline-block bg-white text-[#0fe3c2] font-semibold px-6 py-3 rounded-full hover:bg-gray-100 transition">
-              Start Grading
-            </Link>
+            <div className="flex gap-4">
+              <Link href="start" className="inline-block bg-white text-[#0fe3c2] font-semibold px-6 py-3 rounded-full hover:bg-gray-100 transition">
+                Create Assignment
+              </Link>
+              <Link href="submissions" className="inline-block bg-white/20 text-white font-semibold px-6 py-3 rounded-full hover:bg-white/30 transition border border-white/30">
+                Grade Submissions
+              </Link>
+            </div>
           </div>
 
 <div className="flex-1 flex justify-center items-center">

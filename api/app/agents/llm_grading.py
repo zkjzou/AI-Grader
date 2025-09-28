@@ -46,6 +46,42 @@ def _detect_mime_type(path: str) -> str:
     return "application/octet-stream"
 
 
+def _sanitize_filename(filename: str) -> str:
+    """Sanitize filename to meet Google GenAI API requirements.
+    
+    File resource names may only contain lowercase alphanumeric characters or dashes (-) 
+    and cannot begin or end with a dash.
+    """
+    import re
+    
+    # Remove file extension
+    name_without_ext = os.path.splitext(filename)[0]
+    
+    # Convert to lowercase
+    sanitized = name_without_ext.lower()
+    
+    # Replace any non-alphanumeric characters (except dashes) with dashes
+    sanitized = re.sub(r'[^a-z0-9-]', '-', sanitized)
+    
+    # Remove multiple consecutive dashes
+    sanitized = re.sub(r'-+', '-', sanitized)
+    
+    # Remove leading and trailing dashes
+    sanitized = sanitized.strip('-')
+    
+    # Ensure it's not empty and add a fallback
+    if not sanitized:
+        sanitized = "file"
+    
+    # Ensure it doesn't start or end with dash
+    if sanitized.startswith('-'):
+        sanitized = 'file-' + sanitized[1:]
+    if sanitized.endswith('-'):
+        sanitized = sanitized[:-1] + '-file'
+    
+    return sanitized
+
+
 def _upload_file(client: genai.Client, file_path: str, *, mime_type: Optional[str] = None, timeout_s: int = 120) -> Any:
     """Return an existing Google file if present; otherwise upload and wait until ACTIVE.
 
@@ -56,8 +92,13 @@ def _upload_file(client: genai.Client, file_path: str, *, mime_type: Optional[st
     if not os.path.isfile(file_path):
         raise FileNotFoundError(f"File not found: {file_path}")
 
-    desired_name = os.path.basename(file_path).split(".")[0]
+    original_filename = os.path.basename(file_path)
+    desired_name = _sanitize_filename(original_filename)
     expected_resource_name = f"files/{desired_name}"
+    
+    # Log the filename transformation for debugging
+    if original_filename != desired_name:
+        print(f"Filename sanitized: '{original_filename}' -> '{desired_name}'")
 
     # Try to reuse an existing file by name
     existing = None

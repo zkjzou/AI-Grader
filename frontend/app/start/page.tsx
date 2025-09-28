@@ -465,9 +465,7 @@ export default function Home() {
   const [problemFiles, setProblemFiles] = useState<UploadedFile[]>([]);
   const [rubricFiles, setRubricFiles] = useState<UploadedFile[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [projectName, setProjectName] = useState("");
-  const [projects, setProjects] = useState<Array<{ id: string; name: string; createdAt: number }>>([]);
-  const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
+  const [assignmentName, setAssignmentName] = useState("");
   const [parseResult, setParseResult] = useState<null | {
     items: Array<{
       id: string;
@@ -476,18 +474,10 @@ export default function Home() {
       maxPoints: number;
       rubric: Array<{ id: string; description: string; points: number }>;
     }>;
-    received: { problems: string[]; rubrics: string[] };
+    assignmentId: string;
   }>(null);
-  const [finalRubricItems, setFinalRubricItems] = useState<
-    Array<{
-      id: string;
-      title: string;
-      prompt: string;
-      maxPoints: number;
-      rubric: Array<{ id: string; description: string; points: number }>;
-    }>
-  >([]);
-  const [step, setStep] = useState<"project" | "upload" | "review">("project");
+  const [step, setStep] = useState<"upload" | "review">("upload");
+  const [pollingInterval, setPollingInterval] = useState<NodeJS.Timeout | null>(null);
 
   const handleProblemFiles = useCallback((list: FileList | null) => {
     if (!list) return;
@@ -509,62 +499,87 @@ export default function Home() {
     setRubricFiles((prev) => [...prev, ...mapped]);
   }, []);
 
-  // Uploading rubric/solutions is optional now; users must finish rubric editing to proceed.
-  const isReady = problemFiles.length > 0; // only problem set required for parse step
+  // Function to map backend data structure to frontend format
+  const mapBackendToFrontend = (backendData: any) => {
+    if (!backendData.rubric || !Array.isArray(backendData.rubric)) {
+      return [];
+    }
 
-  // Load projects from localStorage
-  useEffect(() => {
+    return backendData.rubric.map((problem: any, index: number) => ({
+      id: problem.id || `problem-${index}`,
+      title: problem.name || `Problem ${index + 1}`,
+      prompt: problem.description || "",
+      maxPoints: problem.total || 0,
+      rubric: problem.items?.map((item: any, itemIndex: number) => ({
+        id: item.id || `item-${index}-${itemIndex}`,
+        description: item.description || "",
+        points: item.points || 0,
+      })) || [],
+    }));
+  };
+
+  // Polling function to check assignment processing status
+  const pollAssignmentStatus = useCallback(async (assignmentId: string) => {
     try {
-      const raw = localStorage.getItem("ai-grader-projects");
-      if (raw) {
-        const parsed = JSON.parse(raw) as Array<{ id: string; name: string; createdAt: number }>;
-        setProjects(parsed);
-        if (parsed.length > 0) {
-          setActiveProjectId(parsed[0].id);
-          setProjectName(parsed[0].name);
-          // Jump to upload if a project exists, otherwise stay on project creation
-          setStep("upload");
-        }
+      const response = await fetch(`http://localhost:8000/assignments/${assignmentId}`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch assignment status");
       }
-    } catch {}
-  }, []);
+      const data = await response.json();
+      
+      // Check if processing is complete (rubric is available)
+      if (data.rubric && data.problem_structure) {
+        // Stop polling
+        if (pollingInterval) {
+          clearInterval(pollingInterval);
+          setPollingInterval(null);
+        }
+        
+        // Map the data and proceed to review
+        const mappedItems = mapBackendToFrontend(data);
+        setParseResult({
+          items: mappedItems,
+          assignmentId: assignmentId,
+        });
+        setStep("review");
+        setIsLoading(false);
+      }
+    } catch (error) {
+      console.error("Error polling assignment status:", error);
+      // Continue polling on error, but maybe add retry limit
+    }
+  }, [pollingInterval]);
 
-  // Persist projects
+  // Cleanup polling on unmount
   useEffect(() => {
-    try {
-      localStorage.setItem("ai-grader-projects", JSON.stringify(projects));
-    } catch {}
-  }, [projects]);
+    return () => {
+      if (pollingInterval) {
+        clearInterval(pollingInterval);
+      }
+    };
+  }, [pollingInterval]);
 
-  const handleCreateProject = () => {
-    const name = projectName.trim();
-    if (!name) return;
-    const newProject = { id: `prj-${Math.random().toString(36).slice(2, 8)}`, name, createdAt: Date.now() };
-    setProjects((prev) => [newProject, ...prev]);
-    setActiveProjectId(newProject.id);
-    // Reset per-project working data
-    setProblemFiles([]);
-    setRubricFiles([]);
-    setParseResult(null);
-    setStep("upload");
-  };
+  // Uploading rubric/solutions is optional now; users must finish rubric editing to proceed.
+  const isReady = problemFiles.length > 0 && assignmentName.trim() !== ""; // problem set and name required
 
-  const switchToProject = (id: string) => {
-    const proj = projects.find((p) => p.id === id);
-    setActiveProjectId(id);
-    setProjectName(proj?.name || "");
-    router.push(`/projects/${id}`);
-  };
 
   return (
     <div className="font-sans min-h-screen " >
 <header className="flex items-center justify-between px-6 py-4 bg-white dark:bg-gray-900 shadow-sm rounded-[50px] mt-6 mx-6 mb-6">
 
-  <div className="flex items-center gap-3">
-  <Link href="/">
-    <Image src={logo} alt="logo" width={200} height={200} className="cursor-pointer" />
-  </Link>
-</div>
+  <div className="flex items-center gap-6">
+    <Link href="/">
+      <Image src={logo} alt="logo" width={200} height={200} className="cursor-pointer" />
+    </Link>
+    <nav className="flex items-center gap-4">
+      <Link href="/start" className="text-sm font-medium text-black dark:text-white hover:text-[#0fe3c2]">
+        Create Assignment
+      </Link>
+      <Link href="/submissions" className="text-sm font-medium text-black/60 dark:text-white/60 hover:text-[#0fe3c2]">
+        Grade Submissions
+      </Link>
+    </nav>
+  </div>
 
   <div className="flex items-center gap-3">
     <div className="flex items-center gap-4">
@@ -584,90 +599,35 @@ export default function Home() {
 
 
       <main className="px-6 sm:px-10 pb-16">
-        <div className="max-w-7xl mx-auto flex gap-6 mt-15">
-          <aside className="hidden md:block w-64 shrink-0">
-            <div className="sticky top-6 rounded-2xl border border-black/10 dark:border-white/15 p-4">
-              <div className="flex items-center justify-between mb-3">
-                <h2 className="text-sm font-semibold">Projects</h2>
-                <button
-  className="text-xs rounded-full px-2 py-1 bg-[#0fe3c2] text-white border border-[#0fe3c2] hover:bg-[#a8ffe9] hover:border-[#a8ffe9]"
-  onClick={() => {
-    setProjectName("");
-    setStep("project");
-  }}
->
-  New
-</button>
-
-              </div>
-              {projects.length === 0 ? (
-                <p className="text-xs text-black/60 dark:text-white/60">No projects yet.</p>
-              ) : (
-                <ul className="space-y-1">
-                  {projects.map((p) => (
-                    <li key={p.id}>
-                      <button
-  className={`w-full text-left text-xs px-3 py-2 rounded-lg border border-transparent hover:bg-[#a8ffe9]/20 dark:hover:bg-[#a8ffe9]/20 ${activeProjectId === p.id ? "bg-black/5 dark:bg-white/5 border-black/10 dark:border-white/15" : ""}`}
-  onClick={() => switchToProject(p.id)}
-  title={p.name}
->
-  <div className="truncate font-medium">{p.name}</div>
-  <div className="truncate text-[10px] text-black/60 dark:text-white/60">{new Date(p.createdAt).toLocaleString()}</div>
-</button>
-
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          </aside>
-          <div className="flex-1">
-
-          {step === "project" && (
-            <section className="grid grid-cols-1 gap-6">
-              <div className="w-full max-w-xl mx-20 rounded-2xl border border-black/10 dark:border-white/15 bg-background/60 backdrop-blur-sm shadow-sm p-6 sm:p-8">
-                <h2 className="text-xl font-semibold tracking-tight mb-1">Create new grading project</h2>
-                <p className="text-sm text-black/60 dark:text-white/60 mb-5">Give your project a descriptive name. You'll upload the problem set and rubric next.</p>
-                <label className="block text-xs text-black/60 dark:text-white/60 mb-1">Project name</label>
-                <input
-                  className="w-full text-sm bg-transparent outline-none border rounded-md border-black/10 dark:border-white/15 px-3 py-2 focus:border-[#0fe3c2]"
-                  placeholder="Assignment 1: Linear Algebra Quiz 1"
-                  value={projectName}
-                  onChange={(e) => setProjectName(e.target.value)}
-                />
-                <div className="flex justify-end">
-                  <button
-                    disabled={!projectName.trim()}
-                    className={`mt-6 rounded-full px-6 py-3 text-sm font-medium transition-colors ${
-                      projectName.trim()
-                        ? "bg-[#0fe3c2] text-white hover:bg-[#a8ffe9]"
-                        : "bg-black/10 dark:bg-white/10 text-black/60 dark:text-white/60 cursor-not-allowed"
-                    }`}
-                    onClick={handleCreateProject}
-                  >
-                    Continue
-                  </button>
-                </div>
-              </div>
-            </section>
-          )}
+        <div className="max-w-4xl mx-auto mt-15">
 
           {step === "upload" && (
-            <section className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
-            <UploadCard
-              title="Upload problem set"
-              description="PDF, DOCX, images, or plain text"
-              accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.txt,.md"
-              onFilesSelected={handleProblemFiles}
-              files={problemFiles}
-            />
-            <UploadCard
-              title="Upload solution / rubric"
-              description="PDF, DOCX, CSV, or text files"
-              accept=".pdf,.doc,.docx,.csv,.txt,.md"
-              onFilesSelected={handleRubricFiles}
-              files={rubricFiles}
-            />
+            <section className="flex justify-center w-full">
+              <div className="w-full max-w-xl mx-auto rounded-2xl border border-black/10 dark:border-white/15 bg-white dark:bg-gray-900 shadow-sm p-6 sm:p-8">
+                <h2 className="text-xl font-semibold tracking-tight mb-1">Create Assignment</h2>
+                <p className="text-sm text-black/60 dark:text-white/60 mb-6">
+                  Give your assignment a name and upload the problem set.
+                </p>
+
+                {/* Assignment Name Input */}
+                <div className="mb-6">
+                  <label className="block text-sm font-medium mb-2">Assignment Name</label>
+                  <input
+                    className="w-full text-sm bg-transparent outline-none border rounded-md border-black/10 dark:border-white/15 px-3 py-2 focus:border-[#0fe3c2]"
+                    placeholder="e.g., Linear Algebra Homework 2"
+                    value={assignmentName}
+                    onChange={(e) => setAssignmentName(e.target.value)}
+                  />
+                </div>
+
+                <UploadCard
+                  title="Upload problem set"
+                  description="PDF, DOCX, images, or plain text"
+                  accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.txt,.md"
+                  onFilesSelected={handleProblemFiles}
+                  files={problemFiles}
+                />
+              </div>
             </section>
           )}
 
@@ -683,21 +643,35 @@ export default function Home() {
                 onClick={async () => {
                   try {
                     setIsLoading(true);
+                    
                     const form = new FormData();
-                    if (projectName) form.append("projectName", projectName);
-                    for (const f of problemFiles) form.append("problems", f.file);
-                    for (const f of rubricFiles) form.append("rubrics", f.file);
-                    const res = await fetch("/api/parse", {
+                    form.append("file", problemFiles[0].file);
+                    form.append("name", assignmentName.trim());
+                    const res = await fetch("http://localhost:8000/assignments", {
                       method: "POST",
                       body: form,
                     });
                     if (!res.ok) throw new Error("Upload failed");
                     const data = await res.json();
-                    setParseResult(data);
-                    setStep("review");
+                    console.log("Assignment created:", data);
+                    
+                    // Start polling for processing completion
+                    const assignmentId = data.assignment_id;
+                    if (assignmentId) {
+                      // Start polling every 2 seconds
+                      const interval = setInterval(() => {
+                        pollAssignmentStatus(assignmentId);
+                      }, 2000);
+                      setPollingInterval(interval);
+                      
+                      // Also poll immediately
+                      pollAssignmentStatus(assignmentId);
+                    } else {
+                      throw new Error("No assignment ID returned");
+                    }
                   } catch (e) {
+                    console.error("Upload error:", e);
                     alert("Failed to submit files. Please try again.");
-                  } finally {
                     setIsLoading(false);
                   }
                 }}
@@ -715,12 +689,12 @@ export default function Home() {
                   xmlns="http://www.w3.org/2000/svg"
                   fill="none"
                   viewBox="0 0 24 24"
-            aria-hidden
+                  aria-hidden
                 >
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
                 </svg>
-                <span>Parsing documents…</span>
+                <span>Processing assignment and extracting problems…</span>
               </div>
             </div>
           )}
@@ -737,8 +711,7 @@ export default function Home() {
                         setParseResult(null);
                         setProblemFiles([]);
                         setRubricFiles([]);
-                        setProjectName("");
-                        setStep("project");
+                        setStep("upload");
                       }}
                     >
                       Start over
@@ -749,23 +722,13 @@ export default function Home() {
                 <ProblemsEditor
                   initialItems={parseResult.items}
                   onFinalize={(items) => {
-                    setFinalRubricItems(items);
-                    try {
-                      if (activeProjectId) {
-                        localStorage.setItem(`ai-grader-rubric-${activeProjectId}`, JSON.stringify(items));
-                      }
-                    } catch {}
-                    if (activeProjectId) {
-                      router.push(`/projects/${activeProjectId}`);
-                    }
+                    // Navigate to submissions page
+                    router.push("/submissions");
                   }}
                 />
               </div>
             </section>
           )}
-
-          
-          </div>
         </div>
       </main>
     </div>
