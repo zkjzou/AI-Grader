@@ -721,7 +721,7 @@ export default function Home() {
               <div className="rounded-2xl border border-black/10 dark:border-white/15 p-6 sm:p-8">
                 <div className="flex items-center justify-between gap-4 mb-4">
                   <h2 className="text-xl font-semibold tracking-tight">Review extracted problems & rubrics</h2>
-                  <div className="flex items-center gap-2">
+                  {/* <div className="flex items-center gap-2">
                     <button
                       className="text-xs rounded-full px-3 py-1 border border-black/10 dark:border-white/15 hover:bg-black/5 dark:hover:bg-white/5"
                       onClick={() => {
@@ -733,7 +733,7 @@ export default function Home() {
                     >
                       Start over
                     </button>
-                  </div>
+                  </div> */}
                 </div>
 
                 <ProblemsEditor
