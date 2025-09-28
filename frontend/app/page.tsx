@@ -451,16 +451,16 @@ function ProblemsEditor({
   );
 }
 
-// Matching UI removed from the main page. Project pages now handle grading UX.
+// Matching UI removed from the main page. Assignment pages now handle grading UX.
 
 export default function Home() {
   const router = useRouter();
   const [problemFiles, setProblemFiles] = useState<UploadedFile[]>([]);
   const [rubricFiles, setRubricFiles] = useState<UploadedFile[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [projectName, setProjectName] = useState("");
-  const [projects, setProjects] = useState<Array<{ id: string; name: string; createdAt: number }>>([]);
-  const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
+  const [assignmentName, setAssignmentName] = useState("");
+  const [assignments, setAssignments] = useState<Array<{ id: string; name: string; createdAt: number }>>([]);
+  const [activeAssignmentId, setActiveAssignmentId] = useState<string | null>(null);
   const [parseResult, setParseResult] = useState<null | {
     items: Array<{
       id: string;
@@ -480,7 +480,7 @@ export default function Home() {
       rubric: Array<{ id: string; description: string; points: number }>;
     }>
   >([]);
-  const [step, setStep] = useState<"project" | "upload" | "review">("project");
+  const [step, setStep] = useState<"assignment" | "upload" | "review">("assignment");
 
   const handleProblemFiles = useCallback((list: FileList | null) => {
     if (!list) return;
@@ -505,48 +505,48 @@ export default function Home() {
   // Uploading rubric/solutions is optional now; users must finish rubric editing to proceed.
   const isReady = problemFiles.length > 0; // only problem set required for parse step
 
-  // Load projects from localStorage
+  // Load assignments from localStorage
   useEffect(() => {
     try {
-      const raw = localStorage.getItem("ai-grader-projects");
+      const raw = localStorage.getItem("ai-grader-assignments");
       if (raw) {
         const parsed = JSON.parse(raw) as Array<{ id: string; name: string; createdAt: number }>;
-        setProjects(parsed);
+        setAssignments(parsed);
         if (parsed.length > 0) {
-          setActiveProjectId(parsed[0].id);
-          setProjectName(parsed[0].name);
-          // Jump to upload if a project exists, otherwise stay on project creation
+          setActiveAssignmentId(parsed[0].id);
+          setAssignmentName(parsed[0].name);
+          // Jump to upload if a assignment exists, otherwise stay on assignment creation
           setStep("upload");
         }
       }
     } catch {}
   }, []);
 
-  // Persist projects
+  // Persist assignments
   useEffect(() => {
     try {
-      localStorage.setItem("ai-grader-projects", JSON.stringify(projects));
+      localStorage.setItem("ai-grader-assignments", JSON.stringify(assignments));
     } catch {}
-  }, [projects]);
+  }, [assignments]);
 
-  const handleCreateProject = () => {
-    const name = projectName.trim();
+  const handleCreateAssignment = () => {
+    const name = assignmentName.trim();
     if (!name) return;
-    const newProject = { id: `prj-${Math.random().toString(36).slice(2, 8)}`, name, createdAt: Date.now() };
-    setProjects((prev) => [newProject, ...prev]);
-    setActiveProjectId(newProject.id);
-    // Reset per-project working data
+    const newAssignment = { id: `prj-${Math.random().toString(36).slice(2, 8)}`, name, createdAt: Date.now() };
+    setAssignments((prev) => [newAssignment, ...prev]);
+    setActiveAssignmentId(newAssignment.id);
+    // Reset per-assignment working data
     setProblemFiles([]);
     setRubricFiles([]);
     setParseResult(null);
     setStep("upload");
   };
 
-  const switchToProject = (id: string) => {
-    const proj = projects.find((p) => p.id === id);
-    setActiveProjectId(id);
-    setProjectName(proj?.name || "");
-    router.push(`/projects/${id}`);
+  const switchToAssignment = (id: string) => {
+    const proj = assignments.find((p) => p.id === id);
+    setActiveAssignmentId(id);
+    setAssignmentName(proj?.name || "");
+    router.push(`/assignments/${id}`);
   };
 
   return (
@@ -556,9 +556,9 @@ export default function Home() {
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg bg-[#818cf8]" />
             <span className="text-base font-semibold tracking-tight">AI Grader</span>
-            {projectName && (
+            {assignmentName && (
               <span className="text-xs px-2 py-1 rounded-full border border-black/10 dark:border-white/15 text-black/70 dark:text-white/70">
-                {projectName}
+                {assignmentName}
               </span>
             )}
           </div>
@@ -570,26 +570,26 @@ export default function Home() {
           <aside className="hidden md:block w-64 shrink-0">
             <div className="sticky top-6 rounded-2xl border border-black/10 dark:border-white/15 p-4">
               <div className="flex items-center justify-between mb-3">
-                <h2 className="text-sm font-semibold">Projects</h2>
+                <h2 className="text-sm font-semibold">Assignments</h2>
                 <button
                   className="text-xs rounded-full px-2 py-1 border border-black/10 dark:border-white/15 hover:bg-black/5 dark:hover:bg-white/5"
                   onClick={() => {
-                    setProjectName("");
-                    setStep("project");
+                    setAssignmentName("");
+                    setStep("assignment");
                   }}
                 >
                   New
                 </button>
               </div>
-              {projects.length === 0 ? (
-                <p className="text-xs text-black/60 dark:text-white/60">No projects yet.</p>
+              {assignments.length === 0 ? (
+                <p className="text-xs text-black/60 dark:text-white/60">No assignments yet.</p>
               ) : (
                 <ul className="space-y-1">
-                  {projects.map((p) => (
+                  {assignments.map((p) => (
                     <li key={p.id}>
                       <button
-                        className={`w-full text-left text-xs px-3 py-2 rounded-lg border border-transparent hover:bg-black/5 dark:hover:bg-white/5 ${activeProjectId === p.id ? "bg-black/5 dark:bg-white/5 border-black/10 dark:border-white/15" : ""}`}
-                        onClick={() => switchToProject(p.id)}
+                        className={`w-full text-left text-xs px-3 py-2 rounded-lg border border-transparent hover:bg-black/5 dark:hover:bg-white/5 ${activeAssignmentId === p.id ? "bg-black/5 dark:bg-white/5 border-black/10 dark:border-white/15" : ""}`}
+                        onClick={() => switchToAssignment(p.id)}
                         title={p.name}
                       >
                         <div className="truncate font-medium">{p.name}</div>
@@ -611,27 +611,27 @@ export default function Home() {
             </p>
           </section>
 
-          {step === "project" && (
+          {step === "assignment" && (
             <section className="grid grid-cols-1 gap-6">
               <div className="w-full max-w-xl mx-auto rounded-2xl border border-black/10 dark:border-white/15 bg-background/60 backdrop-blur-sm shadow-sm p-6 sm:p-8">
-                <h2 className="text-xl font-semibold tracking-tight mb-1">Create new grading project</h2>
-                <p className="text-sm text-black/60 dark:text-white/60 mb-5">Give your project a descriptive name. You'll upload the problem set and rubric next.</p>
-                <label className="block text-xs text-black/60 dark:text-white/60 mb-1">Project name</label>
+                <h2 className="text-xl font-semibold tracking-tight mb-1">Create new grading assignment</h2>
+                <p className="text-sm text-black/60 dark:text-white/60 mb-5">Give your assignment a descriptive name. You'll upload the problem set and rubric next.</p>
+                <label className="block text-xs text-black/60 dark:text-white/60 mb-1">Assignment name</label>
                 <input
                   className="w-full text-sm bg-transparent outline-none border rounded-md border-black/10 dark:border-white/15 px-3 py-2 focus:border-[#818cf8]"
                   placeholder="Assignment 1: Linear Algebra Quiz 1"
-                  value={projectName}
-                  onChange={(e) => setProjectName(e.target.value)}
+                  value={assignmentName}
+                  onChange={(e) => setAssignmentName(e.target.value)}
                 />
                 <div className="flex justify-end">
                   <button
-                    disabled={!projectName.trim()}
+                    disabled={!assignmentName.trim()}
                     className={`mt-6 rounded-full px-6 py-3 text-sm font-medium transition-colors ${
-                      projectName.trim()
+                      assignmentName.trim()
                         ? "bg-[#818cf8] text-white hover:bg-[#6c79f6]"
                         : "bg-black/10 dark:bg-white/10 text-black/60 dark:text-white/60 cursor-not-allowed"
                     }`}
-                    onClick={handleCreateProject}
+                    onClick={handleCreateAssignment}
                   >
                     Continue
                   </button>
@@ -672,7 +672,7 @@ export default function Home() {
                   try {
                     setIsLoading(true);
                     const form = new FormData();
-                    if (projectName) form.append("projectName", projectName);
+                    if (assignmentName) form.append("assignmentName", assignmentName);
                     for (const f of problemFiles) form.append("problems", f.file);
                     for (const f of rubricFiles) form.append("rubrics", f.file);
                     const res = await fetch("/api/parse", {
@@ -725,8 +725,8 @@ export default function Home() {
                         setParseResult(null);
                         setProblemFiles([]);
                         setRubricFiles([]);
-                        setProjectName("");
-                        setStep("project");
+                        setAssignmentName("");
+                        setStep("assignment");
                       }}
                     >
                       Start over
@@ -741,12 +741,12 @@ export default function Home() {
                   onFinalize={(items) => {
                     setFinalRubricItems(items);
                     try {
-                      if (activeProjectId) {
-                        localStorage.setItem(`ai-grader-rubric-${activeProjectId}`, JSON.stringify(items));
+                      if (activeAssignmentId) {
+                        localStorage.setItem(`ai-grader-rubric-${activeAssignmentId}`, JSON.stringify(items));
                       }
                     } catch {}
-                    if (activeProjectId) {
-                      router.push(`/projects/${activeProjectId}`);
+                    if (activeAssignmentId) {
+                      router.push(`/assignments/${activeAssignmentId}`);
                     }
                   }}
                 />
