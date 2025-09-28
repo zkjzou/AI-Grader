@@ -1,8 +1,8 @@
 """create initial tables
 
-Revision ID: d502c94093a4
+Revision ID: 363c521367e1
 Revises: 
-Create Date: 2025-09-27 22:42:49.791575
+Create Date: 2025-09-28 01:43:32.160727
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = 'd502c94093a4'
+revision: str = '363c521367e1'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -99,10 +99,12 @@ def upgrade() -> None:
     sa.Column('id', sa.Uuid(), nullable=False),
     sa.Column('submission_id', sa.Uuid(), nullable=False),
     sa.Column('criterion_id', sa.Uuid(), nullable=False),
+    sa.Column('selected_level_id', sa.Uuid(), nullable=True),
     sa.Column('score', sa.Numeric(), nullable=False),
     sa.Column('reasoning', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
     sa.Column('human_override', sa.Boolean(), nullable=False),
     sa.ForeignKeyConstraint(['criterion_id'], ['rubriccriteria.id'], ),
+    sa.ForeignKeyConstraint(['selected_level_id'], ['rubriclevel.id'], ),
     sa.ForeignKeyConstraint(['submission_id'], ['submission.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
